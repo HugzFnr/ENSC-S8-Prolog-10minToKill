@@ -60,8 +60,15 @@ conc([T,Q],L,[T|QL]):- conc(Q,L,QL).
 ajouter(E,L,LR):- conc(L,[E],LR).
 ajouter(E,[],[E]).
 
+dans(X,[X|_]).
+dans(X,[T|Q]):- X \== T, dans(X,Q).
+
 deplacer(Perso,IdDepart,IdArrivee):- case(IdDepart,_,_,_,LD),case(IdArrivee,_,_,_,LA),
                                     supprimer(Perso,LD,NLD),retract(case(IdDepart,_,_,_,LD)),assert(case(IdDepart,_,_,_,NLD)),
                                     ajouter(Perso,LA,NLA),retract(case(IdArrivee,_,_,_,LA)),assert(case(IdArrivee,_,_,_,NLA)), !.
+
+ajouterPolicier(Policier,IdCase):- case(IdCase,_,_,_,LC),ajouter(Policier,LC,NLC),retract(case(IdCase,_,_,_,LC)),assert(case(IdCase,_,_,_,NLC)), !.
+
+%controleIdentite(Perso,JoueurCible):- case(Id,_,_,_,L),dans(Perso,L),dans(personnage(_,police,_,vivant),L),personnage(Perso,tueur,JoueurCible,_).
 
 %Fin de fichier
