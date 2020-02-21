@@ -59,13 +59,11 @@ ajouter(E,[],[E]).
 
 %--- Prédicats de jeu---
 
-<<<<<<< HEAD
 deplacer(Perso,IdDepart,IdArrivee):- case(IdDepart,LigneD,ColonneD,SniperD,LD),case(IdArrivee,LigneA,ColonneA,SniperA,LA),
                                     supprimer(Perso,LD,NLD),retract(case(IdDepart,LigneD,ColonneD,SniperD,LD)),assert(case(IdDepart,LigneD,ColonneD,SniperD,NLD)),
                                     ajouter(Perso,LA,NLA),retract(case(IdArrivee,LigneA,ColonneA,SniperA,LA)),assert(case(IdArrivee,LigneA,ColonneA,SniperA,NLA)), !.
 
 ajouterPolicier(Policier,IdCase):- case(IdCase,LigneC,ColonneC,SniperC,LC),ajouter(Policier,LC,NLC),retract(case(IdCase,LigneC,ColonneC,SniperC,LC)),assert(case(IdCase,LigneC,ColonneC,SniperC,NLC)), !.
-=======
 % - Initialisation -
 lancerJeu :- dynamic(case/5),dynamic(personnage/4). %
 
@@ -93,7 +91,6 @@ deplacer(Perso,IdDepart,IdArrivee):- case(IdDepart,_,_,_,LD),case(IdArrivee,_,_,
                                     
 % - Police -
 ajouterPolicier(Policier,IdCase):- case(IdCase,_,_,_,LC),ajouter(Policier,LC,NLC),retract(case(IdCase,_,_,_,LC)),assert(case(IdCase,_,_,_,NLC)), !.
->>>>>>> 45a17fbb5caefa442675e4df33c32cf9ae0d6244
 
 dansCase(Perso,Id):- case(Id,_,_,_,L),dans(Perso,L),!.
 
