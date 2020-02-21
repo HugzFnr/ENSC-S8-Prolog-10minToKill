@@ -51,6 +51,17 @@ personnage(police3,police,none,vivant).
 %Soit prédicats dynamiques
 %soit des listes qui se baladent de prédicat en prédicat, avec des gros états et des accesseurs, un peu type orienté objet
 
-deplacer(perso,caseDepart,caseArrivee):- .
+supprimer(E,[E|Q],QT):-supprimer(E,Q,QT). % si l'élément à supprimer est le premier élément de la liste.
+supprimer(E,[T|Q],[T|QT]):- E \== T, supprimer(E,Q,QT).
+supprimer(_,[],[]).
+
+conc([E],L,[E|L]).
+conc([T,Q],L,[T|QL]):- conc(Q,L,QL).
+ajouter(E,L,LR):- conc(L,[E],LR).
+ajouter(E,[],[E]).
+
+deplacer(Perso,IdDepart,IdArrivee):- case(IdDepart,_,_,_,LD),case(IdArrivee,_,_,_,LA),
+                                    supprimer(Perso,LD,NLD),retract(case(IdDepart,_,_,_,LD)),assert(case(IdDepart,_,_,_,NLD)),
+                                    ajouter(Perso,LA,NLA),retract(case(IdArrivee,_,_,_,LA)),assert(case(IdArrivee,_,_,_,NLA)), !.
 
 %Fin de fichier
