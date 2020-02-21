@@ -1,6 +1,4 @@
-%  CASES DU PLATEAU
-% case(id,ligne,colonne,sniper,liste des persos)
-
+% ---case(id,ligne,colonne,sniper,liste des persos) ---
 case(t11,1,1,s,[loup]).
 case(t21,2,1,n,[chat]).
 case(t31,3,1,n,[panda]).
@@ -21,7 +19,7 @@ case(t24,2,4,n,[singe]).
 case(t34,3,4,n,[rhino]).
 case(t44,4,4,s,[tatou]).
 
-% personnage(nom,role(tueur/cible/innocent/police),joueur(j1,j2,none),etat(vivant/mort/arrete)).
+% --- personnage(nom,role(tueur/cible/innocent/police),joueur(j1,j2,none),etat(vivant/mort/arrete)). ---
 personnage(loup,tueur,j1,vivant).
 personnage(chat,tueur,j2,vivant).
 
@@ -46,9 +44,25 @@ personnage(police1,police,none,vivant).
 personnage(police2,police,none,vivant).
 personnage(police3,police,none,vivant).
 
+%--- Prédicats de manipulation de liste ---
 dans(X,[X|_]).
 dans(X,[T|Q]):- X\==T,dans(X,Q).
 
+supprimer(E,[E|Q],QT):-supprimer(E,Q,QT). % si l'élément à supprimer est le premier élément de la liste.
+supprimer(E,[T|Q],[T|QT]):- E \== T, supprimer(E,Q,QT).
+supprimer(_,[],[]).
+
+conc([E],L,[E|L]).
+conc([T,Q],L,[T|QL]):- conc(Q,L,QL).
+ajouter(E,L,LR):- conc(L,[E],LR).
+ajouter(E,[],[E]).
+
+%--- Prédicats de jeu---
+
+% - Initialisation -
+lancerJeu :- dynamic(case/5),dynamic(personnage/4).
+
+% - Tuer -
 tuer(Joueur,PersoCible):- personnage(PersoTueur,tueur,Joueur,vivant),
 case(CaseCible,_,_,_,X),dans(PersoCible,X),
 (pistolet(PersoTueur,CaseCible);sniper(PersoTueur,CaseCible);couteau(PersoTueur,CaseCible)),
@@ -63,31 +77,14 @@ pistolet(PersoTueur,CaseCible) :- 1==2.
 sniper(PersoTueur,CaseCible) :- 1==2. %d'abord on test le couteau hein
 couteau(PersoTueur,CaseCible) :- case(CaseTueur,_,_,_,X),dans(PersoTueur,X), CaseTueur==CaseCible.
 
-lancerJeu :- dynamic(case/5),dynamic(personnage/4).
 %viderCase(X):-retract(case(X,_,_,_,_)).
 
-%faut balancer ça au début : dynamic(case/5). on sait pas si on peut le mettre dans le code source
-%ça permet de utiliser les assert et retract pour supprimer et ajouter des prédicats
-
-%Soit prédicats dynamiques
-%soit des listes qui se baladent de prédicat en prédicat, avec des gros états et des accesseurs, un peu type orienté objet
-
-supprimer(E,[E|Q],QT):-supprimer(E,Q,QT). % si l'élément à supprimer est le premier élément de la liste.
-supprimer(E,[T|Q],[T|QT]):- E \== T, supprimer(E,Q,QT).
-supprimer(_,[],[]).
-
-conc([E],L,[E|L]).
-conc([T,Q],L,[T|QL]):- conc(Q,L,QL).
-ajouter(E,L,LR):- conc(L,[E],LR).
-ajouter(E,[],[E]).
-
-dans(X,[X|_]).
-dans(X,[T|Q]):- X \== T, dans(X,Q).
-
+% - Déplacer -
 deplacer(Perso,IdDepart,IdArrivee):- case(IdDepart,_,_,_,LD),case(IdArrivee,_,_,_,LA),
                                     supprimer(Perso,LD,NLD),retract(case(IdDepart,_,_,_,LD)),assert(case(IdDepart,_,_,_,NLD)),
                                     ajouter(Perso,LA,NLA),retract(case(IdArrivee,_,_,_,LA)),assert(case(IdArrivee,_,_,_,NLA)), !.
-
+                                    
+% - Police -
 ajouterPolicier(Policier,IdCase):- case(IdCase,_,_,_,LC),ajouter(Policier,LC,NLC),retract(case(IdCase,_,_,_,LC)),assert(case(IdCase,_,_,_,NLC)), !.
 
 %controleIdentite(Perso,JoueurCible):- case(Id,_,_,_,L),dans(Perso,L),dans(personnage(_,police,_,vivant),L),personnage(Perso,tueur,JoueurCible,_).
