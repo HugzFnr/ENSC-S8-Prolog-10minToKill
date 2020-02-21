@@ -60,7 +60,7 @@ ajouter(E,[],[E]).
 %--- Prédicats de jeu---
 
 % - Initialisation -
-lancerJeu :- dynamic(case/5),dynamic(personnage/4).
+lancerJeu :- dynamic(case/5),dynamic(personnage/4). %
 
 % - Tuer -
 tuer(Joueur,PersoCible):- personnage(PersoTueur,tueur,Joueur,vivant),
@@ -70,14 +70,14 @@ mourir(PersoCible,CaseCible).
 
 mourir(PersoCible,CaseCadavre):- personnage(PersoCible,_,_,vivant),
 retract(personnage(PersoCible,Role,Joueur,vivant)),
-assert(personnage(PersoCible,Role,Joueur,mort)). %puis l'enlever de la case 
-%faudra aussi voir si c'est la victime
+assert(personnage(PersoCible,Role,Joueur,mort)),
+case(CaseCadavre,_,_,_,Temoins),
+supprimer(PersoCible,Temoins,TemoinsVivants),retract(case(CaseCadavre,C,L,S,Temoins)),assert(case(CaseCadavre,C,L,S,TemoinsVivants)). %puis l'enlever de la case 
+%faudra aussi voir si c'est la victime pour le score
 
-pistolet(PersoTueur,CaseCible) :- 1==2.
+pistolet(PersoTueur,CaseCible) :- 1==2. %temp
 sniper(PersoTueur,CaseCible) :- 1==2. %d'abord on test le couteau hein
 couteau(PersoTueur,CaseCible) :- case(CaseTueur,_,_,_,X),dans(PersoTueur,X), CaseTueur==CaseCible.
-
-%viderCase(X):-retract(case(X,_,_,_,_)).
 
 % - Déplacer -
 deplacer(Perso,IdDepart,IdArrivee):- case(IdDepart,_,_,_,LD),case(IdArrivee,_,_,_,LA),
