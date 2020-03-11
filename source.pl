@@ -85,7 +85,9 @@ sniper(PersoTueur,CaseCible) :- case(_,LT,CT,s,X|Q),dans(PersoTueur,X),case(Case
 couteau(PersoTueur,CaseCible) :- case(CaseTueur,_,_,_,X),dans(PersoTueur,X), CaseTueur==CaseCible.
 
 % - Déplacer -
-deplacer(Perso,IdDepart,IdArrivee):- case(IdDepart,_,_,_,LD),case(IdArrivee,_,_,_,LA),
+deplacer(Perso,IdArrivee):- dansCase(Perso,IdDepart),
+                                    case(IdDepart,_,_,_,LD),
+                                    case(IdArrivee,_,_,_,LA),
                                     supprimer(Perso,LD,NLD),
                                     retract(case(IdDepart,_,_,_,LD)),
                                     assert(case(IdDepart,_,_,_,NLD)),
@@ -95,6 +97,7 @@ deplacer(Perso,IdDepart,IdArrivee):- case(IdDepart,_,_,_,LD),case(IdArrivee,_,_,
                                     
 % - Police -
 ajouterPolicier(Policier,IdCase):- personnage(Policier,police,_,vivant),
+                                    \+ dansCase(Policier,Id),
                                     case(IdCase,_,_,_,LC),
                                     ajouter(Policier,LC,NLC),
                                     retract(case(IdCase,_,_,_,LC)),
@@ -103,7 +106,7 @@ ajouterPolicier(Policier,IdCase):- personnage(Policier,police,_,vivant),
 dansCase(Perso,Id):- case(Id,_,_,_,L),dans(Perso,L). % fonctionne bien
 
 controleIdentite(Perso,JoueurCible):- dansCase(Perso,IdCase),
-                                        dansCase(AutrePerso,IdCas),
+                                        dansCase(AutrePerso,IdCase),
                                         personnage(AutrePerso,police,_,vivant),
                                         personnage(Perso,tueur,JoueurCible,_),!.
 
