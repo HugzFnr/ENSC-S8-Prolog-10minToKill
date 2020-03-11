@@ -35,7 +35,7 @@ personnage(tigre,innocent,none,vivant).
 personnage(poulpe,innocent,none,vivant).
 personnage(fouine,innocent,none,vivant).
 personnage(koala,innocent,none,vivant).
-personnage(canard,innocent,none,vivant).
+personnage(canard,innocent,none,vivant).()
 personnage(singe,innocent,none,vivant).
 personnage(rhino,innocent,none,vivant).
 personnage(tatou,innocent,none,vivant).
@@ -44,8 +44,8 @@ personnage(police1,police,none,vivant).
 personnage(police2,police,none,vivant).
 personnage(police3,police,none,vivant).
 
-% - Initialisation -
-lancerJeu :- dynamic(case/5),dynamic(personnage/4).
+joueur(j1,0,actif).
+joueur(j2,0,attente).
 
 %--- Prédicats de manipulation de liste ---
 dans(X,[X|_]).
@@ -63,14 +63,14 @@ ajouter(E,[],[E]).
 %--- Prédicats de jeu---
 
 % - Initialisation -
-lancerJeu :- dynamic(case/5),dynamic(personnage/4). %
+lancerJeu :- dynamic(case/5),dynamic(personnage/4),dynamic(joueur/3). %
 
 
 % - Tuer -
 tuer(Joueur,PersoCible):- personnage(PersoTueur,tueur,Joueur,vivant),
 case(CaseCible,_,_,_,X),dans(PersoCible,X),
 (pistolet(PersoTueur,CaseCible);sniper(PersoTueur,CaseCible);couteau(PersoTueur,CaseCible)),
-mourir(PersoCible,CaseCible).
+mourir(PersoCible,CaseCible),consequencesScore(Joueur,PersoCible),!.
 %faudra aussi voir si c'est la victime pour le score
 %fix le suicide
 
@@ -81,10 +81,10 @@ case(CaseCadavre,_,_,_,Temoins),
 supprimer(PersoCible,Temoins,TemoinsVivants),retract(case(CaseCadavre,C,L,S,Temoins)),assert(case(CaseCadavre,C,L,S,TemoinsVivants)). 
 %gérer les témoins ici?
 
-pistolet(PersoTueur,CaseCible) :- case(_,LT,CT,_,X|Q),dans(PersoTueur,X),case(CaseCible,LC,CC,_,_),Q==[],
+pistolet(PersoTueur,CaseCible) :- case(_,LT,CT,_,[X|Q]),X==PersoTueur,case(CaseCible,LC,CC,_,_),Q==[], %pas possible si ya un policier sur la case
 ((CT=:=CC,LT=:=LC+1);(CT=:=CC,LC=:=LT+1);(CT=:=CC+1,LC=:=LT);(CC=:=CT+1,LC=:=LT)).
-sniper(PersoTueur,CaseCible) :- case(_,LT,CT,s,X|Q),dans(PersoTueur,X),case(CaseCible,LC,CC,_,_),Q==[],(CT=:=CC;LT=:=LC).
-couteau(PersoTueur,CaseCible) :- case(CaseTueur,_,_,_,X),dans(PersoTueur,X), CaseTueur==CaseCible.
+sniper(PersoTueur,CaseCible) :- case(_,LT,CT,s,[X|Q]),X==PersoTueur,case(CaseCible,LC,CC,_,_),Q==[],(CT=:=CC;LT=:=LC).
+couteau(PersoTueur,CaseCible) :- case(CaseTueur,_,_,_,X),dans(PersoTueur,X), CaseTueur==CaseCible. %pas possible si ya un policier sur la case
 
 % - Déplacer -
 deplacer(Perso,IdDepart,IdArrivee):- case(IdDepart,_,_,_,LD),case(IdArrivee,_,_,_,LA),
@@ -106,7 +106,21 @@ dansCase(Perso,Id):- case(Id,_,_,_,L),dans(Perso,L),!. % fonctionne bien
 
 controleIdentite(Perso,IdCase,JoueurCible):- dansCase(Perso,IdCase),
                                             case(IdCase,_,_,_,L),
-                                            dans(personnage(Policier,police,_,vivant),L),
+                                            dans(personnage(_,police,_,vivant),L),
                                             personnage(Perso,tueur,JoueurCible,_),!.
+
+%Score
+gagnerPoints(Joueur,Valeur) :- joueur(Joueur,Score,Tour),Somme is (Score+Valeur),assert(joueur(Joueur,Somme,Tour)),retract(joueur(Joueur,Score,Tour)).
+
+%cas 1 : c'est sa cible
+consequencesScore(Joueur,PersoMort) :- personnage(PersoMort,cible,Joueur,mort),gagnerPoints(Joueur,1).
+%cas 2 : c'est un tueur adverse
+consequencesScore(Joueur,PersoMort) :- personnage(PersoMort,tueur,AutreJoueur,mort),AutreJoueur\==Joueur,gagnerPoints(Joueur,3).
+%cas 3 : c'est un innocent
+consequencesScore(Joueur,PersoMort) :- personnage(PersoMort,innocent,_,mort),gagnerPoints(Joueur,-1).
+%cas 3 bis : c'est la cible d'un autre joueur
+consequencesScore(Joueur,PersoMort) :- personnage(PersoMort,cible,AutreJoueur,mort),AutreJoueur\==Joueur,gagnerPoints(Joueur,-1).
+%cas 4 : c'est un policier
+consequencesScore(Joueur,PersoMort) :- personnage(PersoMort,police,_,mort),gagnerPoints(Joueur,-1337).
 
 %Fin de fichier
