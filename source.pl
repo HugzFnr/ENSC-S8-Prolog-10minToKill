@@ -44,8 +44,6 @@ personnage(police1,police,none,vivant).
 personnage(police2,police,none,vivant).
 personnage(police3,police,none,vivant).
 
-% - Initialisation -
-lancerJeu :- dynamic(case/5),dynamic(personnage/4).
 
 %--- Prédicats de manipulation de liste ---
 dans(X,[X|_]).
@@ -102,11 +100,11 @@ ajouterPolicier(Policier,IdCase):- personnage(Policier,police,_,vivant),
                                     retract(case(IdCase,_,_,_,LC)),
                                     assert(case(IdCase,_,_,_,NLC)), !.
 
-dansCase(Perso,Id):- case(Id,_,_,_,L),dans(Perso,L),!. % fonctionne bien
+dansCase(Perso,Id):- case(Id,_,_,_,L),dans(Perso,L). % fonctionne bien
 
-controleIdentite(Perso,IdCase,JoueurCible):- dansCase(Perso,IdCase),
-                                            case(IdCase,_,_,_,L),
-                                            dans(personnage(Policier,police,_,vivant),L),
-                                            personnage(Perso,tueur,JoueurCible,_),!.
+controleIdentite(Perso,JoueurCible):- dansCase(Perso,IdCase),
+                                        dansCase(AutrePerso,IdCas),
+                                        personnage(AutrePerso,police,_,vivant),
+                                        personnage(Perso,tueur,JoueurCible,_),!.
 
 %Fin de fichier
