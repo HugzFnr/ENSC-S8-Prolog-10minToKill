@@ -59,11 +59,6 @@ ajouter(E,[],[E]).
 
 %--- Prédicats de jeu---
 
-deplacer(Perso,IdDepart,IdArrivee):- case(IdDepart,LigneD,ColonneD,SniperD,LD),case(IdArrivee,LigneA,ColonneA,SniperA,LA),
-                                    supprimer(Perso,LD,NLD),retract(case(IdDepart,LigneD,ColonneD,SniperD,LD)),assert(case(IdDepart,LigneD,ColonneD,SniperD,NLD)),
-                                    ajouter(Perso,LA,NLA),retract(case(IdArrivee,LigneA,ColonneA,SniperA,LA)),assert(case(IdArrivee,LigneA,ColonneA,SniperA,NLA)), !.
-
-ajouterPolicier(Policier,IdCase):- case(IdCase,LigneC,ColonneC,SniperC,LC),ajouter(Policier,LC,NLC),retract(case(IdCase,LigneC,ColonneC,SniperC,LC)),assert(case(IdCase,LigneC,ColonneC,SniperC,NLC)), !.
 % - Initialisation -
 lancerJeu :- dynamic(case/5),dynamic(personnage/4). %
 
@@ -86,14 +81,25 @@ couteau(PersoTueur,CaseCible) :- case(CaseTueur,_,_,_,X),dans(PersoTueur,X), Cas
 
 % - Déplacer -
 deplacer(Perso,IdDepart,IdArrivee):- case(IdDepart,_,_,_,LD),case(IdArrivee,_,_,_,LA),
-                                    supprimer(Perso,LD,NLD),retract(case(IdDepart,_,_,_,LD)),assert(case(IdDepart,_,_,_,NLD)),
-                                    ajouter(Perso,LA,NLA),retract(case(IdArrivee,_,_,_,LA)),assert(case(IdArrivee,_,_,_,NLA)), !.
+                                    supprimer(Perso,LD,NLD),
+                                    retract(case(IdDepart,_,_,_,LD)),
+                                    assert(case(IdDepart,_,_,_,NLD)),
+                                    ajouter(Perso,LA,NLA),
+                                    retract(case(IdArrivee,_,_,_,LA)),
+                                    assert(case(IdArrivee,_,_,_,NLA)), !.
                                     
 % - Police -
-ajouterPolicier(Policier,IdCase):- case(IdCase,_,_,_,LC),ajouter(Policier,LC,NLC),retract(case(IdCase,_,_,_,LC)),assert(case(IdCase,_,_,_,NLC)), !.
+ajouterPolicier(Policier,IdCase):- personnage(Policier,police,_,vivant),
+                                    case(IdCase,_,_,_,LC),
+                                    ajouter(Policier,LC,NLC),
+                                    retract(case(IdCase,_,_,_,LC)),
+                                    assert(case(IdCase,_,_,_,NLC)), !.
 
-dansCase(Perso,Id):- case(Id,_,_,_,L),dans(Perso,L),!.
+dansCase(Perso,Id):- case(Id,_,_,_,L),dans(Perso,L),!. % fonctionne bien
 
-controleIdentite(Perso,JoueurCible):- dansCase(Perso,Id),case(Id,_,_,_,L),dans(personnage(_,police,_,vivant),L),personnage(Perso,tueur,JoueurCible,_),!.
+controleIdentite(Perso,IdCase,JoueurCible):- dansCase(Perso,IdCase),
+                                            case(IdCase,_,_,_,L),
+                                            dans(personnage(Policier,police,_,vivant),L),
+                                            personnage(Perso,tueur,JoueurCible,_),!.
 
 %Fin de fichier
