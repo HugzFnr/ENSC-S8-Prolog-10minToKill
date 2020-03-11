@@ -44,6 +44,9 @@ personnage(police1,police,none,vivant).
 personnage(police2,police,none,vivant).
 personnage(police3,police,none,vivant).
 
+% - Initialisation -
+lancerJeu :- dynamic(case/5),dynamic(personnage/4).
+
 %--- Prédicats de manipulation de liste ---
 dans(X,[X|_]).
 dans(X,[T|Q]):- X\==T,dans(X,Q).
@@ -64,24 +67,26 @@ deplacer(Perso,IdDepart,IdArrivee):- case(IdDepart,LigneD,ColonneD,SniperD,LD),c
                                     ajouter(Perso,LA,NLA),retract(case(IdArrivee,LigneA,ColonneA,SniperA,LA)),assert(case(IdArrivee,LigneA,ColonneA,SniperA,NLA)), !.
 
 ajouterPolicier(Policier,IdCase):- case(IdCase,LigneC,ColonneC,SniperC,LC),ajouter(Policier,LC,NLC),retract(case(IdCase,LigneC,ColonneC,SniperC,LC)),assert(case(IdCase,LigneC,ColonneC,SniperC,NLC)), !.
-% - Initialisation -
-lancerJeu :- dynamic(case/5),dynamic(personnage/4). %
+
 
 % - Tuer -
 tuer(Joueur,PersoCible):- personnage(PersoTueur,tueur,Joueur,vivant),
 case(CaseCible,_,_,_,X),dans(PersoCible,X),
 (pistolet(PersoTueur,CaseCible);sniper(PersoTueur,CaseCible);couteau(PersoTueur,CaseCible)),
 mourir(PersoCible,CaseCible).
+%faudra aussi voir si c'est la victime pour le score
+%fix le suicide
 
 mourir(PersoCible,CaseCadavre):- personnage(PersoCible,_,_,vivant),
 retract(personnage(PersoCible,Role,Joueur,vivant)),
 assert(personnage(PersoCible,Role,Joueur,mort)),
 case(CaseCadavre,_,_,_,Temoins),
-supprimer(PersoCible,Temoins,TemoinsVivants),retract(case(CaseCadavre,C,L,S,Temoins)),assert(case(CaseCadavre,C,L,S,TemoinsVivants)). %puis l'enlever de la case 
-%faudra aussi voir si c'est la victime pour le score
+supprimer(PersoCible,Temoins,TemoinsVivants),retract(case(CaseCadavre,C,L,S,Temoins)),assert(case(CaseCadavre,C,L,S,TemoinsVivants)). 
+%gérer les témoins ici?
 
-pistolet(PersoTueur,CaseCible) :- 1==2. %temp
-sniper(PersoTueur,CaseCible) :- 1==2. %d'abord on test le couteau hein
+pistolet(PersoTueur,CaseCible) :- case(_,LT,CT,_,X|Q),dans(PersoTueur,X),case(CaseCible,LC,CC,_,_),Q==[],
+((CT=:=CC,LT=:=LC+1);(CT=:=CC,LC=:=LT+1);(CT=:=CC+1,LC=:=LT);(CC=:=CT+1,LC=:=LT)).
+sniper(PersoTueur,CaseCible) :- case(_,LT,CT,s,X|Q),dans(PersoTueur,X),case(CaseCible,LC,CC,_,_),Q==[],(CT=:=CC;LT=:=LC).
 couteau(PersoTueur,CaseCible) :- case(CaseTueur,_,_,_,X),dans(PersoTueur,X), CaseTueur==CaseCible.
 
 % - Déplacer -
