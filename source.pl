@@ -1,7 +1,7 @@
 % ---case(id,ligne,colonne,sniper,liste des persos) ---
 case(t11,1,1,s,[loup]).
 case(t21,2,1,n,[chat]).
-case(t31,3,1,n,[panda]).
+case(t31,3,1,s,[panda]).
 case(t41,4,1,n,[tortue]).
 
 case(t12,1,2,n,[ours]).
@@ -9,13 +9,13 @@ case(t22,2,2,n,[pigeon]).
 case(t32,3,2,s,[renard]).
 case(t42,4,2,n,[croco]).
 
-case(t13,1,3,n,[tigre]).
+case(t13,1,3,s,[tigre]).
 case(t23,2,3,s,[poulpe]).
 case(t33,3,3,n,[fouine]).
-case(t43,4,3,n,[koala]).
+case(t43,4,3,s,[koala]).
 
 case(t14,1,4,n,[canard]).
-case(t24,2,4,n,[singe]).
+case(t24,2,4,s,[singe]).
 case(t34,3,4,n,[rhino]).
 case(t44,4,4,s,[tatou]).
 
@@ -33,7 +33,7 @@ personnage(croco,cible,j2,vivant).
 
 personnage(tigre,innocent,none,vivant).
 personnage(poulpe,innocent,none,vivant).
-personnage(fouine,innocent,none,vivant).
+personnage(belette,innocent,none,vivant).
 personnage(koala,innocent,none,vivant).
 personnage(canard,innocent,none,vivant).
 personnage(singe,innocent,none,vivant).
@@ -43,6 +43,8 @@ personnage(tatou,innocent,none,vivant).
 personnage(police1,police,none,vivant).
 personnage(police2,police,none,vivant).
 personnage(police3,police,none,vivant).
+
+% persos = [loup,ours,tigre,canard,chat,pigeon,poulpe,singe,panda,renard,belette,rhino,tortue,croc,koala,tatou]
 
 
 %--- Prédicats de manipulation de liste ---
