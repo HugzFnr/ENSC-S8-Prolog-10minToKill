@@ -1,7 +1,7 @@
 % ---case(id,ligne,colonne,sniper,liste des persos) ---
 case(t11,1,1,s,[loup]).
 case(t21,2,1,n,[chat]).
-case(t31,3,1,n,[panda]).
+case(t31,3,1,s,[panda]).
 case(t41,4,1,n,[tortue]).
 
 case(t12,1,2,n,[ours]).
@@ -9,13 +9,13 @@ case(t22,2,2,n,[pigeon]).
 case(t32,3,2,s,[renard]).
 case(t42,4,2,n,[croco]).
 
-case(t13,1,3,n,[tigre]).
+case(t13,1,3,s,[tigre]).
 case(t23,2,3,s,[poulpe]).
 case(t33,3,3,n,[fouine]).
-case(t43,4,3,n,[koala]).
+case(t43,4,3,s,[koala]).
 
 case(t14,1,4,n,[canard]).
-case(t24,2,4,n,[singe]).
+case(t24,2,4,s,[singe]).
 case(t34,3,4,n,[rhino]).
 case(t44,4,4,s,[tatou]).
 
@@ -33,7 +33,7 @@ personnage(croco,cible,j2,vivant).
 
 personnage(tigre,innocent,none,vivant).
 personnage(poulpe,innocent,none,vivant).
-personnage(fouine,innocent,none,vivant).
+personnage(belette,innocent,none,vivant).
 personnage(koala,innocent,none,vivant).
 personnage(canard,innocent,none,vivant).()
 personnage(singe,innocent,none,vivant).
@@ -46,6 +46,8 @@ personnage(police3,police,none,vivant).
 
 joueur(j1,0,actif).
 joueur(j2,0,attente).
+% persos = [loup,ours,tigre,canard,chat,pigeon,poulpe,singe,panda,renard,belette,rhino,tortue,croc,koala,tatou]
+
 
 %--- Prédicats de manipulation de liste ---
 dans(X,[X|_]).
@@ -87,7 +89,9 @@ sniper(PersoTueur,CaseCible) :- case(_,LT,CT,s,[X|Q]),X==PersoTueur,case(CaseCib
 couteau(PersoTueur,CaseCible) :- case(CaseTueur,_,_,_,X),dans(PersoTueur,X), CaseTueur==CaseCible. %pas possible si ya un policier sur la case
 
 % - Déplacer -
-deplacer(Perso,IdDepart,IdArrivee):- case(IdDepart,_,_,_,LD),case(IdArrivee,_,_,_,LA),
+deplacer(Perso,IdArrivee):- dansCase(Perso,IdDepart),
+                                    case(IdDepart,_,_,_,LD),
+                                    case(IdArrivee,_,_,_,LA),
                                     supprimer(Perso,LD,NLD),
                                     retract(case(IdDepart,_,_,_,LD)),
                                     assert(case(IdDepart,_,_,_,NLD)),
@@ -97,17 +101,18 @@ deplacer(Perso,IdDepart,IdArrivee):- case(IdDepart,_,_,_,LD),case(IdArrivee,_,_,
                                     
 % - Police -
 ajouterPolicier(Policier,IdCase):- personnage(Policier,police,_,vivant),
+                                    \+ dansCase(Policier,Id),
                                     case(IdCase,_,_,_,LC),
                                     ajouter(Policier,LC,NLC),
                                     retract(case(IdCase,_,_,_,LC)),
                                     assert(case(IdCase,_,_,_,NLC)), !.
 
-dansCase(Perso,Id):- case(Id,_,_,_,L),dans(Perso,L),!. % fonctionne bien
+dansCase(Perso,Id):- case(Id,_,_,_,L),dans(Perso,L). % fonctionne bien
 
-controleIdentite(Perso,IdCase,JoueurCible):- dansCase(Perso,IdCase),
-                                            case(IdCase,_,_,_,L),
-                                            dans(personnage(_,police,_,vivant),L),
-                                            personnage(Perso,tueur,JoueurCible,_),!.
+controleIdentite(Perso,JoueurCible):- dansCase(Perso,IdCase),
+                                        dansCase(AutrePerso,IdCase),
+                                        personnage(AutrePerso,police,_,vivant),
+                                        personnage(Perso,tueur,JoueurCible,_),!.
 
 %Score
 gagnerPoints(Joueur,Valeur) :- joueur(Joueur,Score,Tour),Somme is (Score+Valeur),assert(joueur(Joueur,Somme,Tour)),retract(joueur(Joueur,Score,Tour)).
