@@ -58,14 +58,16 @@ supprimer(E,[T|Q],[T|QT]):- E \== T, supprimer(E,Q,QT).
 supprimer(_,[],[]).
 
 conc([E],L,[E|L]).
-conc([T,Q],L,[T|QL]):- conc(Q,L,QL).
-ajouter(E,L,LR):- conc(L,[E],LR).
+conc([T,Q],L2,[T|QL]):- conc(Q,L2,QL).
+
+%ajouter(E,L,LR):- conc(L,[E],LR).
+ajouter(E,L,LR):- conc([E],L,LR).
 ajouter(E,[],[E]).
 
 %--- Prédicats de jeu---
 
 % - Initialisation -
-lancerJeu :- dynamic(case/5),dynamic(personnage/4),dynamic(joueur/4),print('Et amusez vous bien !'), tour(j1).
+lancerJeu :- dynamic(case/5),dynamic(personnage/4),dynamic(joueur/4), tour(j1).
 
 % - Tuer -
 tuer(Joueur,PersoCible):- personnage(PersoTueur,tueur,Joueur,vivant),
@@ -82,10 +84,10 @@ case(CaseCadavre,L,C,S,Temoins),
 supprimer(PersoCible,Temoins,TemoinsVivants),retract(case(CaseCadavre,L,C,S,Temoins)),assert(case(CaseCadavre,L,C,S,TemoinsVivants)). 
 %gérer les témoins ici?
 
-pistolet(PersoTueur,CaseCible) :- case(_,LT,CT,_,[X|Q]),X==PersoTueur,case(CaseCible,LC,CC,_,_),Q==[], %pas possible si ya un policier sur la case
-((CT is CC,LT is LC+1);(CT is CC,LC is LT+1);(CT is CC+1,LC is LT);(CC is CT+1,LC is LT)).
+pistolet(PersoTueur,CaseCible) :- case(_,LT,CT,_,[X|Q]),X==PersoTueur,case(CaseCible,LC,CC,_,PersosCibles),Q==[], %pas possible si ya un policier sur la case
+((CT is CC,LT is LC+1);(CT is CC,LC is LT+1);(CT is CC+1,LC is LT);(CC is CT+1,LC is LT)),\+dans(police1,PersosCibles),\+dans(police2,PersosCibles),\+dans(police3,PersosCibles).
 sniper(PersoTueur,CaseCible) :- case(_,LT,CT,s,[X|Q]),X==PersoTueur,case(CaseCible,LC,CC,_,_),Q==[],(CT is CC;LT is LC).
-couteau(PersoTueur,CaseCible) :- case(CaseTueur,_,_,_,X),dans(PersoTueur,X), CaseTueur==CaseCible. %pas possible si ya un policier sur la case
+couteau(PersoTueur,CaseCible) :- case(CaseTueur,_,_,_,X),dans(PersoTueur,X), CaseTueur==CaseCible,\+dans(police1,X),\+dans(police2,X),\+dans(police3,X). %pas possible si ya un policier sur la case
 
 % - Déplacer -
 deplacer(Perso,IdArrivee):- dansCase(Perso,IdDepart),
@@ -134,7 +136,7 @@ consequencesScore(Joueur,PersoMort) :- personnage(PersoMort,police,_,mort),gagne
 
 %Gestion des tours
 
-tour(Joueur):- print('A ton tour,'),print(Joueur),joueur(Joueur,S,E,A),
+tour(Joueur):- print('A ton tour,'),print(Joueur),print('Tu as 2 actions, tu peux : deplacer(Perso,IdCaseArrivee), tuer(JoueurActif,Cible) ou controleIdentite(Perso,JoueurCible). Tu peux egalement consulter, sans que cela te coute une action : joueur(Nom,Score,Etat,ActionsRestantes),case(Id,Ligne,Colonne,Sniper,Personnages),personnage(Nom,Role,JoueurAssocie,Etat)'),
 retract(joueur(Joueur,S,E,A)),assert(joueur(Joueur,S,actif,2)).
 
 %Fin de fichier
