@@ -101,7 +101,7 @@ deplacer(Perso,IdArrivee):- dansCase(Perso,IdDepart),
                                     
 % - Police -
 ajouterPolicier(Policier,IdCase):- personnage(Policier,police,_,vivant),
-                                    \+ dansCase(Policier,Id),
+                                    \+ dansCase(Policier,_),
                                     case(IdCase,_,_,_,LC),
                                     ajouter(Policier,LC,NLC),
                                     retract(case(IdCase,_,_,_,LC)),
