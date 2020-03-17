@@ -20,16 +20,16 @@ case(t34,3,4,n,[rhino]).
 case(t44,4,4,s,[tatou]).
 
 % --- personnage(nom,role(tueur/cible/innocent/police),joueur(j1,j2,none),etat(vivant/mort/arrete)). ---
-personnage(loup,tueur,j1,vivant).
-personnage(chat,tueur,j2,vivant).
+personnage(loup,innocent,none,vivant). % tueur j1
+personnage(chat,innocent,none,vivant). %tueur j2
 
-personnage(panda,cible,j1,vivant).
-personnage(tortue,cible,j1,vivant).
-personnage(ours,cible,j1,vivant).
+personnage(panda,innocent,none,vivant). % cible j1
+personnage(tortue,innocent,none,vivant). % cible j1
+personnage(ours,innocent,none,vivant). % cible j1
 
-personnage(pigeon,cible,j2,vivant).
-personnage(renard,cible,j2,vivant).
-personnage(croco,cible,j2,vivant).
+personnage(pigeon,innocent,none,vivant). % cible j2
+personnage(renard,innocent,none,vivant). % cible j2
+personnage(croco,innocent,none,vivant). % cible j2
 
 personnage(tigre,innocent,none,vivant).
 personnage(poulpe,innocent,none,vivant).
@@ -54,7 +54,7 @@ dans(X,[X|_]).
 dans(X,[T|Q]):- X\==T,dans(X,Q).
 
 supprimer(E,[E|Q],QT):-supprimer(E,Q,QT). % si l'élément à supprimer est le premier élément de la liste.
-supprimer(E,[T|Q],[T|QT]):- E \== T, supprimer(E,Q,QT).
+supprimer(E,[T|Q],[T|QT]):- E \== T, supprimer(E,Q,QT),!.
 supprimer(_,[],[]).
 
 conc([E],L,[E|L]).
@@ -67,7 +67,54 @@ ajouter(E,[],[E]).
 %--- Prédicats de jeu---
 
 % - Initialisation -
-lancerJeu :- dynamic(case/5),dynamic(personnage/4),dynamic(joueur/4), tour(j1).
+lancerJeu :- dynamic(case/5),
+            dynamic(personnage/4),
+            dynamic(joueur/4),
+            tour(j1),
+            use_module(library(random)),
+            % on attribue un tueur au joueur 1
+            random_member(Tueur1, [loup,ours,tigre,canard,chat,pigeon,poulpe,singe,panda,renard,belette,rhino,tortue,croc,koala,tatou]),
+            supprimer(Tueur1,[loup,ours,tigre,canard,chat,pigeon,poulpe,singe,panda,renard,belette,rhino,tortue,croc,koala,tatou],Persos1),
+            assert(personnage(Tueur1,tueur,j1,vivant)),
+            retract(personnage(Tueur1,innocent,none,vivant)),
+            % on attribue ses cibles au joueur 1
+            %      Cible 1 du joueur 1
+            random_member(Cible11,Persos1),
+            supprimer(Cible11,Persos1,Persos2),
+            assert(personnage(Cible11,cible,j1,vivant)),
+            retract(personnage(Cible11,innocent,none,vivant)),
+            %      Cible 2 du joueur 1
+            random_member(Cible12,Persos2),
+            supprimer(Cible12,Persos2,Persos3),
+            assert(personnage(Cible12,cible,j1,vivant)),
+            retract(personnage(Cible12,innocent,none,vivant)),
+            %      Cible 3 du joueur 1
+            random_member(Cible13,Persos3),
+            supprimer(Cible13,Persos3,Persos4),
+            assert(personnage(Cible13,cible,j1,vivant)),
+            retract(personnage(Cible13,innocent,none,vivant)),
+            % on attribue un tueur au joueur 2
+            random_member(Tueur2,Persos4),
+            supprimer(Tueur2,Persos4,Persos5),
+            assert(personnage(Tueur2,tueur,j2,vivant)),
+            retract(personnage(Tueur2,innocent,none,vivant)),
+            % on attribue ses cibles au joueur 2
+            %      Cible 1 du joueur 2
+            random_member(Cible21,Persos5),
+            supprimer(Cible21,Persos5,Persos6),
+            assert(personnage(Cible21,cible,j2,vivant)),
+            retract(personnage(Cible21,innocent,none,vivant)),
+            %      Cible 2 du joueur 2
+            random_member(Cible22,Persos6),
+            supprimer(Cible22,Persos6,Persos7),
+            assert(personnage(Cible22,cible,j2,vivant)),
+            retract(personnage(Cible22,innocent,none,vivant)),
+            %      Cible 3 du joueur 2
+            random_member(Cible23,Persos7),
+            supprimer(Cible23,Persos7,_),
+            assert(personnage(Cible23,cible,j2,vivant)),
+            retract(personnage(Cible23,innocent,none,vivant)).
+
 
 % - Tuer -
 tuer(Joueur,PersoCible):- personnage(PersoTueur,tueur,Joueur,vivant),
@@ -102,7 +149,7 @@ deplacer(Perso,IdArrivee):- dansCase(Perso,IdDepart),
                                     
 % - Police -
 ajouterPolicier(Policier,IdCase):- personnage(Policier,police,_,vivant),
-                                    \+ dansCase(Policier,Id),
+                                    \+ dansCase(Policier,_),
                                     case(IdCase,LiC,C,S,LC),
                                     ajouter(Policier,LC,NLC),
                                     retract(case(IdCase,LiC,C,S,LC)),
