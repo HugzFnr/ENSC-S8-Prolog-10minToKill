@@ -44,8 +44,8 @@ personnage(police1,police,none,vivant).
 personnage(police2,police,none,vivant).
 personnage(police3,police,none,vivant).
 
-joueur(j1,0,attente,0). %nom du joueur, score, état, actions restantes pour le tour
-joueur(j2,0,attente,0).
+joueur(j1,0,attente,0,j2). %nom du joueur, score, état, actions restantes pour le tour, joueur suivant
+joueur(j2,0,attente,0,j1).
 % persos = [loup,ours,tigre,canard,chat,pigeon,poulpe,singe,panda,renard,belette,rhino,tortue,croc,koala,tatou]
 
 
@@ -69,7 +69,7 @@ ajouter(E,[],[E]).
 % - Initialisation -
 lancerJeu :- dynamic(case/5),
             dynamic(personnage/4),
-            dynamic(joueur/4),
+            dynamic(joueur/5),
             tour(j1),
             use_module(library(random)),
             % on attribue un tueur au joueur 1
@@ -104,11 +104,13 @@ lancerJeu :- dynamic(case/5),
             supprimer(Cible21,Persos5,Persos6),
             assert(personnage(Cible21,cible,j2,vivant)),
             retract(personnage(Cible21,innocent,none,vivant)),
+             
             %      Cible 2 du joueur 2
             random_member(Cible22,Persos6),
             supprimer(Cible22,Persos6,Persos7),
             assert(personnage(Cible22,cible,j2,vivant)),
             retract(personnage(Cible22,innocent,none,vivant)),
+                       
             %      Cible 3 du joueur 2
             random_member(Cible23,Persos7),
             supprimer(Cible23,Persos7,Persos8),
@@ -179,7 +181,7 @@ controleIdentite(Perso,JoueurCible):- dansCase(Perso,IdCase),
                                         personnage(Perso,tueur,JoueurCible,_),!.
 
 %Score
-gagnerPoints(Joueur,Valeur) :- joueur(Joueur,Score,Tour,A),Somme is (Score+Valeur),assert(joueur(Joueur,Somme,Tour,A)),retract(joueur(Joueur,Score,Tour,A)).
+gagnerPoints(Joueur,Valeur) :- joueur(Joueur,Score,Tour,A,JS),Somme is (Score+Valeur),assert(joueur(Joueur,Somme,Tour,A,JS)),retract(joueur(Joueur,Score,Tour,A,JS)).
 
 %cas 1 : c'est sa cible
 consequencesScore(Joueur,PersoMort) :- personnage(PersoMort,cible,Joueur,mort),gagnerPoints(Joueur,1).
@@ -199,7 +201,16 @@ consequencesScore(Joueur,PersoMort) :- personnage(PersoMort,police,_,mort),gagne
 
 %Gestion des tours
 
-tour(Joueur):- print('A ton tour,'),print(Joueur),print('Tu as 2 actions, tu peux : deplacer(Perso,IdCaseArrivee), tuer(JoueurActif,Cible) ou controleIdentite(Perso,JoueurCible). Tu peux egalement consulter, sans que cela te coute une action : joueur(Nom,Score,Etat,ActionsRestantes),case(Id,Ligne,Colonne,Sniper,Personnages),personnage(Nom,Role,JoueurAssocie,Etat)'),
+getJoueurActif(JoueurActif) :- joueur(JoueurActif,_,actif,_,_).
+
+prochainJoueur(JoueurActif,JoueurSuivant) :- joueur(JoueurActif,_,_,_,JoueurSuivant).
+
+changerTour :- getJoueurActif(JoueurActif),prochainJoueur(JoueurActif,JoueurSuivant),tour(JoueurSuivant).
+
+tour(Joueur):- print('A ton tour,'),print(Joueur),print('Tu as 2 actions, tu peux : deplacer(Perso,IdCaseArrivee), tuer(JoueurActif,Cible) ou controleIdentite(Perso,JoueurCible). Tu peux egalement consulter, sans que cela te coute une action : joueur(Nom,Score,Etat,ActionsRestantes),case(Id,Ligne,Colonne,Sniper,Personnages), personnage(Nom,Role,JoueurAssocie,Etat)'),
 retract(joueur(Joueur,S,E,A)),assert(joueur(Joueur,S,actif,2)).
+
+%Vérif de fin de jeu
+
 
 %Fin de fichier
