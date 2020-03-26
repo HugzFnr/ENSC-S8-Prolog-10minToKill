@@ -11,7 +11,7 @@ case(t42,4,2,n,[croco]).
 
 case(t13,1,3,s,[tigre]).
 case(t23,2,3,s,[poulpe]).
-case(t33,3,3,n,[fouine]).
+case(t33,3,3,n,[belette]).
 case(t43,4,3,s,[koala]).
 
 case(t14,1,4,n,[canard]).
@@ -44,8 +44,8 @@ personnage(police1,police,none,vivant).
 personnage(police2,police,none,vivant).
 personnage(police3,police,none,vivant).
 
-joueur(j1,0,attente,0,j2). %nom du joueur, score, état, actions restantes pour le tour, joueur suivant
-joueur(j2,0,attente,0,j1).
+joueur(j1,0,attente,0,j2,0). %nom du joueur, score, état, actions restantes pour le tour, joueur suivant, cibles abbatues
+joueur(j2,0,attente,0,j1,0).
 % persos = [loup,ours,tigre,canard,chat,pigeon,poulpe,singe,panda,renard,belette,rhino,tortue,croc,koala,tatou]
 
 
@@ -69,7 +69,7 @@ ajouter(E,[],[E]).
 % - Initialisation -
 lancerJeu :- dynamic(case/5),
             dynamic(personnage/4),
-            dynamic(joueur/5),
+            dynamic(joueur/6),
             tour(j1),
             use_module(library(random)),
             % on attribue un tueur au joueur 1
@@ -113,16 +113,16 @@ lancerJeu :- dynamic(case/5),
                        
             %      Cible 3 du joueur 2
             random_member(Cible23,Persos7),
-            supprimer(Cible23,Persos7,Persos8),
+            supprimer(Cible23,Persos7,_),
             assert(personnage(Cible23,cible,j2,vivant)),
             retract(personnage(Cible23,innocent,none,vivant)).
 
 
 % - Tuer -
-tuer(Joueur,PersoCible):- personnage(PersoTueur,tueur,Joueur,vivant),
+tuer(PersoCible):- getJoueurActif(Joueur),personnage(PersoTueur,tueur,Joueur,vivant),
 case(CaseCible,_,_,_,X),dans(PersoCible,X),
 (pistolet(PersoTueur,CaseCible);sniper(PersoTueur,CaseCible);couteau(PersoTueur,CaseCible)),
-mourir(PersoCible,CaseCible),consequencesScore(Joueur,PersoCible),!.
+mourir(PersoCible,CaseCible),consequencesScore(Joueur,PersoCible),decompterAction(Joueur),!.
 %faudra aussi voir si c'est la victime pour le score
 %fix le suicide
 
@@ -149,7 +149,7 @@ deplacer(Perso,IdArrivee):- dansCase(Perso,IdDepart),
                                     assert(case(IdDepart,LiD,CD,SD,NLD)),
                                     ajouter(Perso,LA,NLA),
                                     retract(case(IdArrivee,LiA,CA,SA,LA)),
-                                    assert(case(IdArrivee,LiA,CA,SA,NLA)), !.
+                                    assert(case(IdArrivee,LiA,CA,SA,NLA)),getJoueurActif(JoueurActif),decompterAction(JoueurActif),!.
                                     
 % - Police -
 ajouterPolicier(Policier,IdCase):- personnage(Policier,police,_,vivant),
@@ -157,20 +157,21 @@ ajouterPolicier(Policier,IdCase):- personnage(Policier,police,_,vivant),
                                     case(IdCase,LiC,C,S,LC),
                                     ajouter(Policier,LC,NLC),
                                     retract(case(IdCase,LiC,C,S,LC)),
-                                    assert(case(IdCase,LiC,C,S,NLC)), !.
+                                    assert(case(IdCase,LiC,C,S,NLC)),getJoueurActif(JoueurActif),decompterAction(JoueurActif),!.
 
 dansCase(Perso,Id):- case(Id,_,_,_,L),dans(Perso,L). % fonctionne bien
 
 controleIdentite(Perso,JoueurCible):- dansCase(Perso,IdCase),
                                         dansCase(AutrePerso,IdCase),
                                         personnage(AutrePerso,police,_,vivant),
-                                        personnage(Perso,tueur,JoueurCible,_),!.
+                                        personnage(Perso,tueur,JoueurCible,_),getJoueurActif(JoueurActif),decompterAction(JoueurActif),!.
 
 %Score
-gagnerPoints(Joueur,Valeur) :- joueur(Joueur,Score,Tour,A,JS),Somme is (Score+Valeur),assert(joueur(Joueur,Somme,Tour,A,JS)),retract(joueur(Joueur,Score,Tour,A,JS)).
+gagnerPoints(Joueur,Valeur) :- joueur(Joueur,Score,Tour,A,JS,CiblesAbbatues),Somme is (Score+Valeur),assert(joueur(Joueur,Somme,Tour,A,JS,CiblesAbbatues)),retract(joueur(Joueur,Score,Tour,A,JS,CiblesAbbatues)).
 
 %cas 1 : c'est sa cible
-consequencesScore(Joueur,PersoMort) :- personnage(PersoMort,cible,Joueur,mort),gagnerPoints(Joueur,1).
+consequencesScore(Joueur,PersoMort) :- personnage(PersoMort,cible,Joueur,mort),gagnerPoints(Joueur,1),joueur(Joueur,S,T,A,JS,CiblesAbattues),
+NouveauCompte is CiblesAbattues+1,retract(joueur(Joueur,S,T,A,JS,CiblesAbattues)),assert(joueur(Joueur,S,T,A,JS,NouveauCompte)).
 %cas 2 : c'est un tueur adverse
 consequencesScore(Joueur,PersoMort) :- personnage(PersoMort,tueur,AutreJoueur,mort),AutreJoueur\==Joueur,gagnerPoints(Joueur,3).
 %cas 3 : c'est un innocent
@@ -187,16 +188,24 @@ consequencesScore(Joueur,PersoMort) :- personnage(PersoMort,police,_,mort),gagne
 
 %Gestion des tours
 
-getJoueurActif(JoueurActif) :- joueur(JoueurActif,_,actif,_,_).
+getJoueurActif(JoueurActif) :- joueur(JoueurActif,_,actif,_,_,_).
 
-prochainJoueur(JoueurActif,JoueurSuivant) :- joueur(JoueurActif,_,_,_,JoueurSuivant).
+prochainJoueur(JoueurActif,JoueurSuivant) :- joueur(JoueurActif,_,_,_,JoueurSuivant,_).
 
-changerTour :- getJoueurActif(JoueurActif),prochainJoueur(JoueurActif,JoueurSuivant),tour(JoueurSuivant).
+changerTour :- getJoueurActif(JoueurActif),prochainJoueur(JoueurActif,JoueurSuivant),retract(joueur(JoueurActif,S,_,_,JS,CiblesAbbatues)),assert(joueur(JoueurActif,S,attente,0,JS,CiblesAbbatues)),tour(JoueurSuivant).
 
-tour(Joueur):- print('A ton tour,'),print(Joueur),print('Tu as 2 actions, tu peux : deplacer(Perso,IdCaseArrivee), tuer(JoueurActif,Cible) ou controleIdentite(Perso,JoueurCible). Tu peux egalement consulter, sans que cela te coute une action : joueur(Nom,Score,Etat,ActionsRestantes),case(Id,Ligne,Colonne,Sniper,Personnages), personnage(Nom,Role,JoueurAssocie,Etat)'),
-retract(joueur(Joueur,S,E,A)),assert(joueur(Joueur,S,actif,2)).
+decompterAction(Joueur) :- joueur(Joueur,_,_,Actions,_,_),ActionsRestantes is Actions-1,retract(joueur(Joueur,S,E,Actions,JS,CiblesAbbatues)),
+assert(joueur(Joueur,S,E,ActionsRestantes,JS,CiblesAbbatues)),(ActionsRestantes is 0, changerTour);(print('Plus qu\'une action!')),finDuJeu.
+
+tour(Joueur):- print('A ton tour,'),print(Joueur),print('Tu as 2 actions, tu peux : deplacer(Perso,IdCaseArrivee), tuer(Cible) ou controleIdentite(Perso,JoueurCible). Tu peux egalement consulter, sans que cela te coute une action : joueur(Nom,Score,Etat,ActionsRestantes,JoueurSuivant,CiblesAbattues),case(Id,_,_,Sniper,Personnages), personnage(Nom,Role,'),print(Joueur),print(',Etat)'),
+retract(joueur(Joueur,S,_,_,JS,CiblesAbbatues)),assert(joueur(Joueur,S,actif,2,JS,CiblesAbbatues)).
 
 %Vérif de fin de jeu
+finDuJeu :- personnage(_,j1,tueur,mort),personnage(_,j2,tueur,mort),print('Fin de la partie, plus aucun tueur n\' est en jeu !'),annoncerGagnant.
+finDuJeu :- joueur(Joueur,_,_,_,_,3),print('Fin de la partie, '),print(Joueur),print(' a tue ses 3 cibles !'),annoncerGagnant.
 
+annoncerGagnant :- joueur(j1,Score1,_,_,_,_),joueur(j2,Score2,_,_,_,_),Score1 > Score2, print('Le joueur 1 a gagne avec un score de '), print(Score1).
+annoncerGagnant :- joueur(j1,Score1,_,_,_,_),joueur(j2,Score2,_,_,_,_),Score1 < Score2, print('Le joueur 2 a gagne avec un score de '), print(Score2).
+annoncerGagnant :- joueur(j1,Score1,_,_,_,_),joueur(j2,Score2,_,_,_,_),Score1 is Score2, print('Il y a égalite sur un score de '), print(Score1).
 
 %Fin de fichier
