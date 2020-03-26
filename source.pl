@@ -11,7 +11,7 @@ case(t42,4,2,n,[croco]).
 
 case(t13,1,3,s,[tigre]).
 case(t23,2,3,s,[poulpe]).
-case(t33,3,3,n,[fouine]).
+case(t33,3,3,n,[belette]).
 case(t43,4,3,s,[koala]).
 
 case(t14,1,4,n,[canard]).
@@ -130,7 +130,9 @@ mourir(PersoCible,CaseCadavre):- personnage(PersoCible,_,_,vivant),
                                 case(CaseCadavre,L,C,S,Temoins),
                                 supprimer(PersoCible,Temoins,TemoinsVivants),
                                 retract(case(CaseCadavre,L,C,S,Temoins)),
-                                assert(case(CaseCadavre,L,C,S,TemoinsVivants)). 
+                                assert(case(CaseCadavre,L,C,S,TemoinsVivants)),
+                                deplacerTemoins(TemoinsVivants,CaseCadavre,
+                                policierPostMeurtre(CaseCadavre). 
 %gérer les témoins ici?
 
 pistolet(PersoTueur,CaseCible) :- case(_,LT,CT,_,[X|Q]),X==PersoTueur,case(CaseCible,LC,CC,_,PersosCibles),Q==[], %pas possible si ya un policier sur la case
@@ -138,16 +140,26 @@ pistolet(PersoTueur,CaseCible) :- case(_,LT,CT,_,[X|Q]),X==PersoTueur,case(CaseC
 sniper(PersoTueur,CaseCible) :- case(_,LT,CT,s,[X|Q]),X==PersoTueur,case(CaseCible,LC,CC,_,_),Q==[],(CT is CC;LT is LC).
 couteau(PersoTueur,CaseCible) :- case(CaseTueur,_,_,_,X),dans(PersoTueur,X), CaseTueur==CaseCible,\+dans(police1,X),\+dans(police2,X),\+dans(police3,X). %pas possible si ya un policier sur la case
 
+deplacerTemoins([Temoin1|AT],CaseCadavre):- supprimer(CaseCadavre,[t11,t12,t13,t14,t21,t22,t23,t24,t31,t32,t33,t34,t41,t42,t43,t44],Tuiles),
+                                            random_member(Tuile,Tuiles),
+                                            deplacer(Temoin1,Tuile),
+                                            deplacerTemoins(AT,CaseCadavre).
+deplacerTemoins([],_).
+
+policierPostMeurtre(CaseCadavre):- deplacer(police1,CaseCadavre);
+                                    ajouterPolicier(police1,CaseCadavre).
+
+
 % - Déplacer -
 deplacer(Perso,IdArrivee):- dansCase(Perso,IdDepart),
-                                    case(IdDepart,LiD,CD,SD,LD),
-                                    case(IdArrivee,LiA,CA,SA,LA),
-                                    supprimer(Perso,LD,NLD),
-                                    retract(case(IdDepart,LiD,CD,SD,LD)),
-                                    assert(case(IdDepart,LiD,CD,SD,NLD)),
-                                    ajouter(Perso,LA,NLA),
-                                    retract(case(IdArrivee,LiA,CA,SA,LA)),
-                                    assert(case(IdArrivee,LiA,CA,SA,NLA)), !.
+                            case(IdDepart,LiD,CD,SD,LD),
+                            case(IdArrivee,LiA,CA,SA,LA),
+                            supprimer(Perso,LD,NLD),
+                            retract(case(IdDepart,LiD,CD,SD,LD)),
+                            assert(case(IdDepart,LiD,CD,SD,NLD)),
+                            ajouter(Perso,LA,NLA),
+                            retract(case(IdArrivee,LiA,CA,SA,LA)),
+                            assert(case(IdArrivee,LiA,CA,SA,NLA)), !.
                                     
 % - Police -
 ajouterPolicier(Policier,IdCase):- personnage(Policier,police,_,vivant),
@@ -157,7 +169,9 @@ ajouterPolicier(Policier,IdCase):- personnage(Policier,police,_,vivant),
                                     retract(case(IdCase,LiC,C,S,LC)),
                                     assert(case(IdCase,LiC,C,S,NLC)), !.
 
-dansCase(Perso,Id):- case(Id,_,_,_,L),dans(Perso,L). % fonctionne bien
+dansCase(Perso,Id):- case(Id,_,_,_,L),dans(Perso,L).
+
+surPlateau(Perso):- dansCase(Perso,_).
 
 controleIdentite(Perso,JoueurCible):- dansCase(Perso,IdCase),
                                         dansCase(AutrePerso,IdCase),
