@@ -132,13 +132,25 @@ mourir(PersoCible,CaseCadavre):- personnage(PersoCible,_,_,vivant),
                                 case(CaseCadavre,L,C,S,Temoins),
                                 supprimer(PersoCible,Temoins,TemoinsVivants),
                                 retract(case(CaseCadavre,L,C,S,Temoins)),
-                                assert(case(CaseCadavre,L,C,S,TemoinsVivants)). 
+                                assert(case(CaseCadavre,L,C,S,TemoinsVivants)),
+                                deplacerTemoins(TemoinsVivants,CaseCadavre,
+                                policierPostMeurtre(CaseCadavre). 
 %gérer les témoins ici?
 
 pistolet(PersoTueur,CaseCible) :- case(_,LT,CT,_,[X|Q]),X==PersoTueur,case(CaseCible,LC,CC,_,PersosCibles),Q==[], %pas possible si ya un policier sur la case
 ((CT is CC,LT is LC+1);(CT is CC,LC is LT+1);(CT is CC+1,LC is LT);(CC is CT+1,LC is LT)),\+dans(police1,PersosCibles),\+dans(police2,PersosCibles),\+dans(police3,PersosCibles).
 sniper(PersoTueur,CaseCible) :- case(_,LT,CT,s,[X|Q]),X==PersoTueur,case(CaseCible,LC,CC,_,_),Q==[],(CT is CC;LT is LC).
 couteau(PersoTueur,CaseCible) :- case(CaseTueur,_,_,_,X),dans(PersoTueur,X), CaseTueur==CaseCible,\+dans(police1,X),\+dans(police2,X),\+dans(police3,X). %pas possible si ya un policier sur la case
+
+deplacerTemoins([Temoin1|AT],CaseCadavre):- supprimer(CaseCadavre,[t11,t12,t13,t14,t21,t22,t23,t24,t31,t32,t33,t34,t41,t42,t43,t44],Tuiles),
+                                            random_member(Tuile,Tuiles),
+                                            deplacer(Temoin1,Tuile),
+                                            deplacerTemoins(AT,CaseCadavre).
+deplacerTemoins([],_).
+
+policierPostMeurtre(CaseCadavre):- deplacer(police1,CaseCadavre);
+                                    ajouterPolicier(police1,CaseCadavre).
+
 
 % - Déplacer -
 deplacer(Perso,IdArrivee):- dansCase(Perso,IdDepart),
@@ -159,7 +171,9 @@ ajouterPolicier(Policier,IdCase):- personnage(Policier,police,_,vivant),
                                     retract(case(IdCase,LiC,C,S,LC)),
                                     assert(case(IdCase,LiC,C,S,NLC)),getJoueurActif(JoueurActif),decompterAction(JoueurActif),!.
 
-dansCase(Perso,Id):- case(Id,_,_,_,L),dans(Perso,L). % fonctionne bien
+dansCase(Perso,Id):- case(Id,_,_,_,L),dans(Perso,L).
+
+surPlateau(Perso):- dansCase(Perso,_).
 
 controleIdentite(Perso,JoueurCible):- dansCase(Perso,IdCase),
                                         dansCase(AutrePerso,IdCase),
