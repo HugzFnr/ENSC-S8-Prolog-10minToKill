@@ -73,8 +73,8 @@ lancerJeu :- dynamic(case/5),
             tour(j1),
             use_module(library(random)),
             % on attribue un tueur au joueur 1
-            random_member(Tueur1, [loup,ours,tigre,canard,chat,pigeon,poulpe,singe,panda,renard,belette,rhino,tortue,croc,koala,tatou]),
-            supprimer(Tueur1,[loup,ours,tigre,canard,chat,pigeon,poulpe,singe,panda,renard,belette,rhino,tortue,croc,koala,tatou],Persos1),
+            random_member(Tueur1, [loup,ours,tigre,canard,chat,pigeon,poulpe,singe,panda,renard,belette,rhino,tortue,croco,koala,tatou]),
+            supprimer(Tueur1,[loup,ours,tigre,canard,chat,pigeon,poulpe,singe,panda,renard,belette,rhino,tortue,croco,koala,tatou],Persos1),
             assert(personnage(Tueur1,tueur,j1,vivant)),
             retract(personnage(Tueur1,innocent,none,vivant)),
             % on attribue ses cibles au joueur 1
@@ -111,7 +111,7 @@ lancerJeu :- dynamic(case/5),
             retract(personnage(Cible22,innocent,none,vivant)),
             %      Cible 3 du joueur 2
             random_member(Cible23,Persos7),
-            supprimer(Cible23,Persos7,_),
+            supprimer(Cible23,Persos7,Persos8),
             assert(personnage(Cible23,cible,j2,vivant)),
             retract(personnage(Cible23,innocent,none,vivant)).
 
@@ -125,10 +125,12 @@ mourir(PersoCible,CaseCible),consequencesScore(Joueur,PersoCible),!.
 %fix le suicide
 
 mourir(PersoCible,CaseCadavre):- personnage(PersoCible,_,_,vivant),
-retract(personnage(PersoCible,Role,Joueur,vivant)),
-assert(personnage(PersoCible,Role,Joueur,mort)),
-case(CaseCadavre,L,C,S,Temoins),
-supprimer(PersoCible,Temoins,TemoinsVivants),retract(case(CaseCadavre,L,C,S,Temoins)),assert(case(CaseCadavre,L,C,S,TemoinsVivants)). 
+                                retract(personnage(PersoCible,Role,Joueur,vivant)),
+                                assert(personnage(PersoCible,Role,Joueur,mort)),
+                                case(CaseCadavre,L,C,S,Temoins),
+                                supprimer(PersoCible,Temoins,TemoinsVivants),
+                                retract(case(CaseCadavre,L,C,S,Temoins)),
+                                assert(case(CaseCadavre,L,C,S,TemoinsVivants)). 
 %gérer les témoins ici?
 
 pistolet(PersoTueur,CaseCible) :- case(_,LT,CT,_,[X|Q]),X==PersoTueur,case(CaseCible,LC,CC,_,PersosCibles),Q==[], %pas possible si ya un policier sur la case
