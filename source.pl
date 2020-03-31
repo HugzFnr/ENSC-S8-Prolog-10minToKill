@@ -198,6 +198,7 @@ controleIdentite(Perso,JoueurCible):- dansCase(Perso,IdCase),
                                         dansCase(AutrePerso,IdCase),
                                         personnage(AutrePerso,police,_,vivant),
                                         personnage(Perso,tueur,JoueurCible,_),
+                                        print('Le controle est positif !'),
                                         getJoueurActif(JoueurActif),
                                         decompterAction(JoueurActif),!.
 
@@ -245,7 +246,7 @@ decompterAction(Joueur) :- joueur(Joueur,_,_,Actions,_,_),
                             retract(joueur(Joueur,S,E,Actions,JS,CiblesAbbatues)),
                             assert(joueur(Joueur,S,E,ActionsRestantes,JS,CiblesAbbatues)),
                             (ActionsRestantes is 0, finDuJeu, changerTour);(print('Plus qu\'une action!')),
-                            finDuJeu.
+                            finDuJeu,!.
 
 tour(Joueur):- print('A ton tour,'),
                 print(Joueur),
@@ -265,6 +266,7 @@ finDuJeu :- joueur(Joueur,_,_,_,_,3),
             print(Joueur),
             print(' a tue ses 3 cibles !'),
             annoncerGagnant.
+finDuJeu. %pour ne pas bloquer les changements de tours
 
 annoncerGagnant :- joueur(j1,Score1,_,_,_,_),
                     joueur(j2,Score2,_,_,_,_),
