@@ -127,8 +127,6 @@ tuer(PersoCible):- getJoueurActif(Joueur),
                     mourir(PersoCible,CaseCible),
                     consequencesScore(Joueur,PersoCible),
                     decompterAction(Joueur),!.
-%faudra aussi voir si c'est la victime pour le score
-%fix le suicide
 
 mourir(PersoCible,CaseCadavre):- personnage(PersoCible,_,_,vivant),
                                 retract(personnage(PersoCible,Role,Joueur,vivant)),
@@ -137,10 +135,10 @@ mourir(PersoCible,CaseCadavre):- personnage(PersoCible,_,_,vivant),
                                 supprimer(PersoCible,Temoins,TemoinsVivants),
                                 retract(case(CaseCadavre,L,C,S,Temoins)),
                                 assert(case(CaseCadavre,L,C,S,TemoinsVivants)),
-                                deplacerTemoins(TemoinsVivants,CaseCadavre,
+                                deplacerTemoins(TemoinsVivants,CaseCadavre),
                                 policierPostMeurtre(CaseCadavre). 
-%gérer les témoins ici?
 
+% - Trois possibilités de meurtre -
 pistolet(PersoTueur,CaseCible) :- case(_,LT,CT,_,[X|Q]),
                                     X==PersoTueur,
                                     case(CaseCible,LC,CC,_,PersosCibles),
@@ -162,6 +160,7 @@ couteau(PersoTueur,CaseCible) :- case(CaseTueur,_,_,_,X),
                                 \+dans(police2,X),
                                 \+dans(police3,X). %pas possible si ya un policier sur la case
 
+% - Gérer les témoins
 deplacerTemoins([Temoin1|AT],CaseCadavre):- supprimer(CaseCadavre,[t11,t12,t13,t14,t21,t22,t23,t24,t31,t32,t33,t34,t41,t42,t43,t44],Tuiles),
                                             random_member(Tuile,Tuiles),
                                             deplacer(Temoin1,Tuile),
@@ -181,9 +180,7 @@ deplacer(Perso,IdArrivee):- dansCase(Perso,IdDepart),
                             assert(case(IdDepart,LiD,CD,SD,NLD)),
                             ajouter(Perso,LA,NLA),
                             retract(case(IdArrivee,LiA,CA,SA,LA)),
-                            assert(case(IdArrivee,LiA,CA,SA,NLA)),
-                            getJoueurActif(JoueurActif),
-                            decompterAction(JoueurActif),!.
+                            assert(case(IdArrivee,LiA,CA,SA,NLA)),!.
                                     
 % - Police -
 ajouterPolicier(Policier,IdCase):- personnage(Policier,police,_,vivant),
@@ -191,9 +188,7 @@ ajouterPolicier(Policier,IdCase):- personnage(Policier,police,_,vivant),
                                     case(IdCase,LiC,C,S,LC),
                                     ajouter(Policier,LC,NLC),
                                     retract(case(IdCase,LiC,C,S,LC)),
-                                    assert(case(IdCase,LiC,C,S,NLC)),
-                                    getJoueurActif(JoueurActif),
-                                    decompterAction(JoueurActif),!.
+                                    assert(case(IdCase,LiC,C,S,NLC)),!.
 
 dansCase(Perso,Id):- case(Id,_,_,_,L),dans(Perso,L).
 
@@ -249,12 +244,12 @@ decompterAction(Joueur) :- joueur(Joueur,_,_,Actions,_,_),
                             ActionsRestantes is Actions-1,
                             retract(joueur(Joueur,S,E,Actions,JS,CiblesAbbatues)),
                             assert(joueur(Joueur,S,E,ActionsRestantes,JS,CiblesAbbatues)),
-                            (ActionsRestantes is 0, changerTour);(print('Plus qu\'une action!')),
+                            (ActionsRestantes is 0, finDuJeu, changerTour);(print('Plus qu\'une action!')),
                             finDuJeu.
 
 tour(Joueur):- print('A ton tour,'),
                 print(Joueur),
-                print('Tu as 2 actions, tu peux : deplacer(Perso,IdCaseArrivee), tuer(Cible) ou controleIdentite(Perso,JoueurCible). Tu peux egalement consulter, sans que cela te coute une action : joueur(Nom,Score,Etat,ActionsRestantes,JoueurSuivant,CiblesAbattues),case(Id,_,_,Sniper,Personnages), personnage(Nom,Role,'),
+                print('Tu as 2 actions, tu peux : actionDeplacer(Perso,IdCaseArrivee), tuer(Cible),actionAjouterPolicier(Policier,IdCase) ou controleIdentite(Perso,JoueurCible). Tu peux egalement consulter, sans que cela te coute une action : joueur(Nom,Score,Etat,ActionsRestantes,JoueurSuivant,CiblesAbattues),case(Id,_,_,Sniper,Personnages), personnage(Nom,Role,'),
                 print(Joueur),
                 print(',Etat)'),
                 retract(joueur(Joueur,S,_,_,JS,CiblesAbbatues)),
@@ -286,5 +281,15 @@ annoncerGagnant :- joueur(j1,Score1,_,_,_,_),
                     Score1 is Score2, 
                     print('Il y a égalite sur un score de '), 
                     print(Score1).
+
+%Sur-prédicats d'action pour pas compter d'action en moins lors des déplacements automatiques
+
+actionAjouterPolicier(Policier,IdCase) :-ajouterPolicier(Policier,IdCase),
+                          getJoueurActif(Joueur),      
+                          decompterAction(Joueur).
+
+actionDeplacer(Perso,IdArrivee) :- deplacer(Perso,IdArrivee),
+                                    getJoueurActif(JoueurActif),
+                                    decompterAction(JoueurActif).
 
 %Fin de fichier
