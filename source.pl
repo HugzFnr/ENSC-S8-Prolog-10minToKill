@@ -142,7 +142,7 @@ mourir(PersoCible,CaseCadavre):- personnage(PersoCible,_,_,vivant),
 pistolet(PersoTueur,CaseCible) :- case(_,LT,CT,_,[X|Q]),
                                     X==PersoTueur,
                                     case(CaseCible,LC,CC,_,PersosCibles),
-                                    Q==[], %pas possible si ya un policier sur la case
+                                    Q==[], %pas possible s'il y a un policier sur la case
                                     ((CT is CC,LT is LC+1);(CT is CC,LC is LT+1);(CT is CC+1,LC is LT);(CC is CT+1,LC is LT)),
                                     \+dans(police1,PersosCibles),
                                     \+dans(police2,PersosCibles),
@@ -158,7 +158,7 @@ couteau(PersoTueur,CaseCible) :- case(CaseTueur,_,_,_,X),
                                 CaseTueur==CaseCible,
                                 \+dans(police1,X),
                                 \+dans(police2,X),
-                                \+dans(police3,X). %pas possible si ya un policier sur la case
+                                \+dans(police3,X). %pas possible s'il y a un policier sur la case
 
 % - Gérer les témoins
 deplacerTemoins([Temoin1|AT],CaseCadavre):- supprimer(CaseCadavre,[t11,t12,t13,t14,t21,t22,t23,t24,t31,t32,t33,t34,t41,t42,t43,t44],Tuiles),
@@ -223,11 +223,6 @@ consequencesScore(Joueur,PersoMort) :- personnage(PersoMort,innocent,_,mort),gag
 consequencesScore(Joueur,PersoMort) :- personnage(PersoMort,cible,AutreJoueur,mort),AutreJoueur\==Joueur,gagnerPoints(Joueur,-1).
 %cas 4 : c'est un policier
 consequencesScore(Joueur,PersoMort) :- personnage(PersoMort,police,_,mort),gagnerPoints(Joueur,-1337).
-
-%Affichage
-
-%afficherPlateau :-case(NumeroCase,_,_,Sniper,Personnages).
-%à réecrire avec les trucs de méta prédicats pour que ça soit utile
 
 %Gestion des tours
 
