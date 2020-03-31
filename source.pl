@@ -20,17 +20,14 @@ case(t34,3,4,n,[rhino]).
 case(t44,4,4,s,[tatou]).
 
 % --- personnage(nom,role(tueur/cible/innocent/police),joueur(j1,j2,none),etat(vivant/mort/arrete)). ---
-personnage(loup,innocent,none,vivant). % tueur j1
-personnage(chat,innocent,none,vivant). %tueur j2
-
-personnage(panda,innocent,none,vivant). % cible j1
-personnage(tortue,innocent,none,vivant). % cible j1
-personnage(ours,innocent,none,vivant). % cible j1
-
-personnage(pigeon,innocent,none,vivant). % cible j2
-personnage(renard,innocent,none,vivant). % cible j2
-personnage(croco,innocent,none,vivant). % cible j2
-
+personnage(loup,innocent,none,vivant).
+personnage(chat,innocent,none,vivant).
+personnage(panda,innocent,none,vivant).
+personnage(tortue,innocent,none,vivant).
+personnage(ours,innocent,none,vivant).
+personnage(pigeon,innocent,none,vivant).
+personnage(renard,innocent,none,vivant).
+personnage(croco,innocent,none,vivant).
 personnage(tigre,innocent,none,vivant).
 personnage(poulpe,innocent,none,vivant).
 personnage(belette,innocent,none,vivant).
@@ -60,7 +57,6 @@ supprimer(_,[],[]).
 conc([E],L,[E|L]).
 conc([T,Q],L2,[T|QL]):- conc(Q,L2,QL).
 
-%ajouter(E,L,LR):- conc(L,[E],LR).
 ajouter(E,L,LR):- conc([E],L,LR).
 ajouter(E,[],[E]).
 
@@ -142,7 +138,7 @@ mourir(PersoCible,CaseCadavre):- personnage(PersoCible,_,_,vivant),
 pistolet(PersoTueur,CaseCible) :- case(_,LT,CT,_,[X|Q]),
                                     X==PersoTueur,
                                     case(CaseCible,LC,CC,_,PersosCibles),
-                                    Q==[], %pas possible s'il y a un policier sur la case
+                                    Q==[], % pas possible s'il y a un policier sur la case
                                     ((CT is CC,LT is LC+1);(CT is CC,LC is LT+1);(CT is CC+1,LC is LT);(CC is CT+1,LC is LT)),
                                     \+dans(police1,PersosCibles),
                                     \+dans(police2,PersosCibles),
@@ -158,9 +154,9 @@ couteau(PersoTueur,CaseCible) :- case(CaseTueur,_,_,_,X),
                                 CaseTueur==CaseCible,
                                 \+dans(police1,X),
                                 \+dans(police2,X),
-                                \+dans(police3,X). %pas possible s'il y a un policier sur la case
+                                \+dans(police3,X). % pas possible s'il y a un policier sur la case
 
-% - Gérer les témoins
+% - Gérer les témoins -
 deplacerTemoins([Temoin1|AT],CaseCadavre):- supprimer(CaseCadavre,[t11,t12,t13,t14,t21,t22,t23,t24,t31,t32,t33,t34,t41,t42,t43,t44],Tuiles),
                                             random_member(Tuile,Tuiles),
                                             deplacer(Temoin1,Tuile),
@@ -202,30 +198,29 @@ controleIdentite(Perso,JoueurCible):- dansCase(Perso,IdCase),
                                         getJoueurActif(JoueurActif),
                                         decompterAction(JoueurActif),!.
 
-%Score
+% - Score -
 gagnerPoints(Joueur,Valeur) :- joueur(Joueur,Score,Tour,A,JS,CiblesAbbatues),
                                 Somme is (Score+Valeur),
                                 assert(joueur(Joueur,Somme,Tour,A,JS,CiblesAbbatues)),
                                 retract(joueur(Joueur,Score,Tour,A,JS,CiblesAbbatues)).
 
-%cas 1 : c'est sa cible
+% cas 1 : c'est sa cible
 consequencesScore(Joueur,PersoMort) :- personnage(PersoMort,cible,Joueur,mort),
                                         gagnerPoints(Joueur,1),
                                         joueur(Joueur,S,T,A,JS,CiblesAbattues),
                                         NouveauCompte is CiblesAbattues+1,
                                         retract(joueur(Joueur,S,T,A,JS,CiblesAbattues)),
                                         assert(joueur(Joueur,S,T,A,JS,NouveauCompte)).
-%cas 2 : c'est un tueur adverse
+% cas 2 : c'est un tueur adverse
 consequencesScore(Joueur,PersoMort) :- personnage(PersoMort,tueur,AutreJoueur,mort),AutreJoueur\==Joueur,gagnerPoints(Joueur,3).
-%cas 3 : c'est un innocent
+% cas 3 : c'est un innocent
 consequencesScore(Joueur,PersoMort) :- personnage(PersoMort,innocent,_,mort),gagnerPoints(Joueur,-1).
-%cas 3 bis : c'est la cible d'un autre joueur
+% cas 3 bis : c'est la cible d'un autre joueur
 consequencesScore(Joueur,PersoMort) :- personnage(PersoMort,cible,AutreJoueur,mort),AutreJoueur\==Joueur,gagnerPoints(Joueur,-1).
-%cas 4 : c'est un policier
+% cas 4 : c'est un policier
 consequencesScore(Joueur,PersoMort) :- personnage(PersoMort,police,_,mort),gagnerPoints(Joueur,-1337).
 
-%Gestion des tours
-
+% - Gestion des tours -
 getJoueurActif(JoueurActif) :- joueur(JoueurActif,_,actif,_,_,_).
 
 prochainJoueur(JoueurActif,JoueurSuivant) :- joueur(JoueurActif,_,_,_,JoueurSuivant,_).
@@ -251,7 +246,7 @@ tour(Joueur):- print('A ton tour,'),
                 retract(joueur(Joueur,S,_,_,JS,CiblesAbbatues)),
                 assert(joueur(Joueur,S,actif,2,JS,CiblesAbbatues)).
 
-%Vérif de fin de jeu
+% - Vérification de fin de jeu -
 finDuJeu :- personnage(_,j1,tueur,mort),
             personnage(_,j2,tueur,mort),
             print('Fin de la partie, plus aucun tueur n\' est en jeu !'),
@@ -279,11 +274,11 @@ annoncerGagnant :- joueur(j1,Score1,_,_,_,_),
                     print('Il y a égalite sur un score de '), 
                     print(Score1).
 
-%Sur-prédicats d'action pour pas compter d'action en moins lors des déplacements automatiques
+% - Sur-prédicats d'action pour pas compter d'action en moins lors des déplacements automatiques -
 
 actionAjouterPolicier(Policier,IdCase) :-ajouterPolicier(Policier,IdCase),
-                          getJoueurActif(Joueur),      
-                          decompterAction(Joueur).
+                                            getJoueurActif(Joueur),      
+                                            decompterAction(Joueur).
 
 actionDeplacer(Perso,IdArrivee) :- deplacer(Perso,IdArrivee),
                                     getJoueurActif(JoueurActif),
